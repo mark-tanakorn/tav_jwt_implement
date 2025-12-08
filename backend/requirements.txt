@@ -63,7 +63,7 @@ langchain==0.3.27
 langchain-anthropic==0.3.19
 langchain-community==0.3.27
 langchain-core==0.3.75
-langchain-google-genai==2.1.10
+langchain-google-genai==3.2.0
 langchain-mistralai==0.2.11
 langchain-ollama==0.3.7
 langchain-openai==0.3.30
