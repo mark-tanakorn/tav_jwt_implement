@@ -19,6 +19,7 @@ from app.api.v1.endpoints import (
     email_interactions,
     credentials,
     huggingface,
+    sso,
 )
 
 api_router = APIRouter()
@@ -38,5 +39,6 @@ api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboar
 api_router.include_router(email_interactions.router, prefix="/email-interactions", tags=["Email Interactions"])
 api_router.include_router(credentials.router, prefix="/credentials", tags=["Credentials"])
 api_router.include_router(huggingface.router, prefix="/huggingface", tags=["HuggingFace"])
+api_router.include_router(sso.router, tags=["SSO"])
 
 

@@ -100,6 +100,14 @@ class Settings(BaseSettings):
     )
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
 
+    # JWT SSO Settings (for cross-app authentication with BizProj)
+    JWT_SECRET_KEY: str = Field(
+        default="ZYeYgYW9mNSXhLzOkXWBnKYutdrrnAh+sSL5w+iUa+c=",
+        env="JWT_SECRET_KEY"
+    )
+    JWT_ISSUER: str = Field(default="BizProj", env="JWT_ISSUER")
+    JWT_AUDIENCE: str = Field(default="TAV", env="JWT_AUDIENCE")
+    JWT_EXPIRY_MINUTES: int = Field(default=120, env="JWT_EXPIRY_MINUTES")
 
     # CORS
     CORS_ORIGINS: List[str] = Field(
