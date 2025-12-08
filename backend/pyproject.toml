@@ -15,7 +15,7 @@ pydantic-settings = "^2.1.0"
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.25"}
 asyncpg = "^0.29.0"
 alembic = "^1.13.0"
-redis = {extras = ["hiredis"], version = "^5.0.1"}
+redis = {extras = ["hiredis"], version = "^6.4.0"}
 celery = {extras = ["redis"], version = "^5.3.4"}
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
