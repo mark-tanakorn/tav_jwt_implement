@@ -40,7 +40,7 @@ pytest-cov = "^4.1.0"
 black = "^23.12.1"
 ruff = "^0.1.9"
 mypy = "^1.8.0"
-ipython = "^8.19.0"
+ipython = "^9.8.0"
 
 [build-system]
 requires = ["poetry-core"]
