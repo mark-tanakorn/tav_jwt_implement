@@ -4,35 +4,7 @@
  */
 
 import { getApiBaseUrl } from './api-config';
-
-// ===== HELPER =====
-async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-      credentials: 'include', // Include cookies for authentication
-      ...options,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    // Handle 204 No Content
-    if (response.status === 204) {
-      return null as T;
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API fetch error:', error);
-    throw error;
-  }
-}
+import { apiFetch } from './api';
 
 // ===== WORKFLOW CRUD =====
 

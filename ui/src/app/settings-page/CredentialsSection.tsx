@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import PasswordInput from "../../components/PasswordInput";
 import { getApiBaseUrl } from "@/lib/api-config";
+import { getAuthToken } from "@/lib/auth";
 
 // Types
 type AuthType = "api_key" | "bearer_token" | "basic_auth" | "oauth2" | "smtp" | "database" | "twilio" | "custom";
@@ -36,7 +37,14 @@ interface FieldDefinition {
 
 // API functions
 async function getCredentials(): Promise<{credentials: Credential[], total: number}> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const response = await fetch(`${getApiBaseUrl()}/api/v1/credentials`, {
+    headers: headers,
     credentials: 'include', // Include cookies for authentication
   });
   if (!response.ok) {
@@ -46,7 +54,14 @@ async function getCredentials(): Promise<{credentials: Credential[], total: numb
 }
 
 async function getCredentialTypes(): Promise<Record<string, CredentialTypeDefinition>> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const response = await fetch(`${getApiBaseUrl()}/api/v1/credentials/types/list`, {
+    headers: headers,
     credentials: 'include', // Include cookies for authentication
   });
   if (!response.ok) {
@@ -64,11 +79,17 @@ async function createCredential(data: {
   metadata?: Record<string, any>;
   description?: string;
 }): Promise<Credential> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const response = await fetch(`${getApiBaseUrl()}/api/v1/credentials`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: headers,
     credentials: 'include', // Include cookies for authentication
     body: JSON.stringify(data),
   });
@@ -83,8 +104,15 @@ async function createCredential(data: {
 }
 
 async function deleteCredential(id: number): Promise<void> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const response = await fetch(`${getApiBaseUrl()}/api/v1/credentials/${id}`, {
     method: "DELETE",
+    headers: headers,
     credentials: 'include', // Include cookies for authentication
   });
   if (!response.ok) {

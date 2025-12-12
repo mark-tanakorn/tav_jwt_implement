@@ -98,7 +98,19 @@ class Settings(BaseSettings):
         default="dev-secret-key-change-in-production-min-32-chars",
         env="SECRET_KEY"
     )
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
+    
+    # ===== TOKEN EXPIRY SETTINGS =====
+    # TAV Session Token (used for all API calls after SSO login)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
+        default=480,  # 8 hours - How long users stay logged in
+        env="ACCESS_TOKEN_EXPIRE_MINUTES"
+    )
+    
+    # SSO JWT Token (external token from BizProj, only used during initial login handoff)
+    JWT_EXPIRY_MINUTES: int = Field(
+        default=15,  # 15 minutes - Short-lived for security (only used once for handoff)
+        env="JWT_EXPIRY_MINUTES"
+    )
 
     # JWT SSO Settings (for cross-app authentication with BizProj)
     JWT_SECRET_KEY: str = Field(
@@ -107,7 +119,6 @@ class Settings(BaseSettings):
     )
     JWT_ISSUER: str = Field(default="BizProj", env="JWT_ISSUER")
     JWT_AUDIENCE: str = Field(default="TAV", env="JWT_AUDIENCE")
-    JWT_EXPIRY_MINUTES: int = Field(default=120, env="JWT_EXPIRY_MINUTES")
 
     # CORS
     CORS_ORIGINS: List[str] = Field(

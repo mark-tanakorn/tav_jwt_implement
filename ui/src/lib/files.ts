@@ -4,6 +4,8 @@
  */
 
 import { getApiBaseUrl } from './api-config';
+import { apiFetch } from './api';
+import { getAuthToken } from './auth';
 
 // ===== TYPES =====
 
@@ -114,6 +116,13 @@ export async function uploadFile(options: UploadFileOptions): Promise<FileMetada
     });
 
     xhr.open('POST', url);
+    
+    // Add authentication header
+    const token = getAuthToken();
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    }
+    
     xhr.send(formData);
   });
 }
@@ -124,11 +133,7 @@ export async function uploadFile(options: UploadFileOptions): Promise<FileMetada
  * Get file metadata by ID
  */
 export async function getFileMetadata(fileId: string): Promise<FileMetadata> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/files/${fileId}`);
-  if (!response.ok) {
-    throw new Error(`Failed to get file metadata: ${response.statusText}`);
-  }
-  return await response.json();
+  return await apiFetch<FileMetadata>(`${getApiBaseUrl()}/api/v1/files/${fileId}`);
 }
 
 /**
@@ -149,13 +154,7 @@ export async function listFiles(options?: {
   if (options?.offset) params.append('offset', options.offset.toString());
 
   const url = `${getApiBaseUrl()}/api/v1/files?${params.toString()}`;
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Failed to list files: ${response.statusText}`);
-  }
-
-  return await response.json();
+  return await apiFetch<FileListResponse>(url);
 }
 
 /**
@@ -186,41 +185,25 @@ export async function downloadFile(fileId: string, filename?: string): Promise<v
  * Delete a file
  */
 export async function deleteFile(fileId: string): Promise<void> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/files/${fileId}`, {
+  await apiFetch<void>(`${getApiBaseUrl()}/api/v1/files/${fileId}`, {
     method: 'DELETE',
   });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete file: ${response.statusText}`);
-  }
 }
 
 /**
  * Get storage statistics
  */
 export async function getStorageStats(): Promise<StorageStatsResponse> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/files/stats/storage`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to get storage stats: ${response.statusText}`);
-  }
-
-  return await response.json();
+  return await apiFetch<StorageStatsResponse>(`${getApiBaseUrl()}/api/v1/files/stats/storage`);
 }
 
 /**
  * Trigger cleanup job (admin)
  */
 export async function triggerCleanup(): Promise<any> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/files/cleanup`, {
+  return await apiFetch<any>(`${getApiBaseUrl()}/api/v1/files/cleanup`, {
     method: 'POST',
   });
-
-  if (!response.ok) {
-    throw new Error(`Failed to trigger cleanup: ${response.statusText}`);
-  }
-
-  return await response.json();
 }
 
 // ===== HELPER FUNCTIONS =====

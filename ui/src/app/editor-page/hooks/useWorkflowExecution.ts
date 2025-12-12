@@ -14,6 +14,7 @@ import {
   getRetryInfo,
 } from '@/lib/editor';
 import { getApiBaseUrl } from '@/lib/api-config';
+import { getAuthToken } from '@/lib/auth';
 
 // Execution result status (after execution completes)
 type ExecutionResult = 'none' | 'completed' | 'failed' | 'stopped';
@@ -96,7 +97,14 @@ export function useWorkflowExecution(
     async function recoverState() {
       try {
         console.log(`[State Recovery] Checking status for workflow: ${workflowId}`);
+        const token = getAuthToken();
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         const response = await fetch(`${getApiBaseUrl()}/api/v1/workflows/${workflowId}/status`, {
+          headers: headers,
           credentials: 'include'
         });
         
@@ -140,6 +148,7 @@ export function useWorkflowExecution(
           // Fetch execution details to restore node states
           try {
             const execResponse = await fetch(`${getApiBaseUrl()}/api/v1/workflows/executions/${lastExecId}`, {
+              headers: headers,
               credentials: 'include'
             });
             if (execResponse.ok) {

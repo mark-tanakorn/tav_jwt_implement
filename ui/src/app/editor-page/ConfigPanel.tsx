@@ -18,6 +18,7 @@ import { MediaFullScreenModal, type AnnotationData } from '@/components/MediaFul
 import type { FileCategory } from '@/lib/files';
 import type { ModelDetails } from '@/lib/huggingface-api';
 import { getApiBaseUrl } from '@/lib/api-config';
+import { getAuthToken } from '@/lib/auth';
 
 // ==================== KeyValue Editor Component ====================
 
@@ -152,7 +153,14 @@ function LocalCredentialPicker({ value, onChange, filter }: LocalCredentialPicke
 
   useEffect(() => {
     // Fetch credentials from backend
+    const token = getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     fetch(`${getApiBaseUrl()}/api/v1/credentials`, {
+      headers: headers,
       credentials: 'include'
     })
       .then(res => res.json())
@@ -245,7 +253,16 @@ function ProviderSelect({ value, onChange, placeholder }: ProviderSelectProps) {
 
   useEffect(() => {
     // Fetch enabled providers from backend
-    fetch(`${getApiBaseUrl()}/api/v1/ai/providers`)
+    const token = getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    fetch(`${getApiBaseUrl()}/api/v1/ai/providers`, {
+      headers: headers,
+      credentials: 'include'
+    })
       .then(res => res.json())
       .then(data => {
         // Filter to only enabled providers and convert to array
@@ -316,7 +333,16 @@ function ModelSelect({ provider, value, onChange, placeholder }: ModelSelectProp
 
     setLoading(true);
     // Fetch available models for selected provider
-    fetch(`${getApiBaseUrl()}/api/v1/ai/providers/${provider}/models`)
+    const token = getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    fetch(`${getApiBaseUrl()}/api/v1/ai/providers/${provider}/models`, {
+      headers: headers,
+      credentials: 'include'
+    })
       .then(res => res.json())
       .then(data => {
         // Extract model IDs from the response

@@ -3,6 +3,7 @@
  */
 
 import { getApiBaseUrl } from './api-config';
+import { getAuthHeaders } from './auth';
 
 // ===== INTERFACES =====
 
@@ -65,6 +66,7 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
+        ...getAuthHeaders(), // Include JWT token if available
         ...options?.headers,
       },
       credentials: 'include', // Add credentials for cookies/auth

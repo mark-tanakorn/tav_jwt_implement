@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { getApiBaseUrl } from '@/lib/api-config';
+import { getAuthToken } from '@/lib/auth';
 
 interface ContextMenuState {
   visible: boolean;
@@ -45,13 +46,18 @@ export const useWorkflowContextMenu = () => {
   const updateWorkflowRecommendation = useCallback(
     async (workflowId: string, recommendation: string | null) => {
       try {
+        const token = getAuthToken();
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         const response = await fetch(`${getApiBaseUrl()}/api/v1/workflows/${workflowId}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            // Add auth header if needed
-            // 'Authorization': `Bearer ${token}`,
-          },
+          headers: headers,
           body: JSON.stringify({
             recommended_await_completion: recommendation,
           }),

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { getApiBaseUrl } from "@/lib/api-config";
+import { getAuthToken } from "@/lib/auth";
 
 type ThemeMode = "light" | "dark" | "default";
 
@@ -42,7 +43,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // Then fetch from backend to sync across devices
     async function loadThemeFromBackend() {
       try {
-        const response = await fetch(`${getApiBaseUrl()}/api/v1/settings/ui`);
+        const token = getAuthToken();
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch(`${getApiBaseUrl()}/api/v1/settings/ui`, {
+          headers: headers,
+          credentials: 'include',
+        });
+        
         if (response.ok) {
           const settings = await response.json();
           const backendTheme = settings.default_theme_mode as ThemeMode;

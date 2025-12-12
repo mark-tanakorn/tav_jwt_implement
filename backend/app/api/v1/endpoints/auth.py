@@ -28,7 +28,7 @@ from app.schemas.auth import (
 from app.schemas.user import UserResponse
 
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+router = APIRouter(prefix="/auth", tags=["🔑 Authentication"])
 
 
 @router.post("/login", response_model=LoginResponse, status_code=status.HTTP_200_OK)

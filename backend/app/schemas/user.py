@@ -1,222 +1,140 @@
 """
 User Schemas
 
-Pydantic models for user data validation and serialization.
+Pydantic models for user data, including JWT-based user representation
+that doesn't require database lookups.
 """
 
-from datetime import datetime
-from decimal import Decimal
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserBase(BaseModel):
-    """Base user schema with common fields."""
-    
-    user_name: str = Field(..., max_length=255, description="Username for login")
-    user_email: Optional[EmailStr] = Field(None, max_length=255, description="User email address")
-    user_firstname: Optional[str] = Field(None, max_length=255, description="First name")
-    user_lastname: Optional[str] = Field(None, max_length=255, description="Last name")
-    
+    """Base user schema"""
+    user_name: str
+    user_email: Optional[str] = None
+    user_firstname: Optional[str] = None
+    user_lastname: Optional[str] = None
+
 
 class UserCreate(UserBase):
-    """Schema for creating a new user."""
-    
-    user_password: str = Field(..., min_length=8, max_length=500, description="User password (will be hashed)")
-    agent_id: Optional[int] = Field(None, description="Agent ID")
-    company_id: Optional[int] = Field(None, description="Company ID")
-    user_nric: Optional[str] = Field(None, max_length=50, description="National registration/identity number")
-    user_initial: Optional[str] = Field(None, max_length=10, description="User initials")
-    user_gender: Optional[str] = Field(None, max_length=20, description="Gender")
-    user_maritalstatus: Optional[str] = Field(None, max_length=50, description="Marital status")
-    user_department_id: Optional[int] = Field(None, description="Department ID")
-    user_branch_id: Optional[int] = Field(None, description="Branch ID")
-    user_officephone: Optional[str] = Field(None, max_length=50, description="Office phone")
-    user_homephone: Optional[str] = Field(None, max_length=50, description="Home phone")
-    user_handphone: Optional[str] = Field(None, max_length=50, description="Mobile phone")
-    user_address1: Optional[str] = Field(None, max_length=500, description="Address line 1")
-    user_address2: Optional[str] = Field(None, max_length=500, description="Address line 2")
-    user_addresscity: Optional[str] = Field(None, max_length=100, description="City")
-    user_stateprovince: Optional[str] = Field(None, max_length=100, description="State/Province")
-    user_postalcode: Optional[str] = Field(None, max_length=20, description="Postal code")
-    user_citycode: Optional[str] = Field(None, max_length=20, description="City code")
-    user_countrycode: Optional[str] = Field(None, max_length=20, description="Country code")
-    user_note: Optional[str] = Field(None, description="Additional notes")
-    user_staffcode: Optional[str] = Field(None, max_length=50, description="Staff code")
-    user_employee_id: Optional[str] = Field(None, max_length=50, description="Employee ID")
-    user_employee_number: Optional[str] = Field(None, max_length=50, description="Employee number")
-    job_title: Optional[str] = Field(None, max_length=255, description="Job title")
-    staff_type: Optional[str] = Field(None, max_length=100, description="Staff type")
-    highest_education: Optional[str] = Field(None, max_length=255, description="Highest education level")
-    join_date: Optional[datetime] = Field(None, description="Date joined the organization")
-    user_approval_limit: Optional[Decimal] = Field(None, description="Approval limit")
-    user_deviation_limit: Optional[Decimal] = Field(None, description="Deviation limit")
-    supervisor_user_id: Optional[int] = Field(None, description="Supervisor user ID")
-    backup_user_id: Optional[int] = Field(None, description="Backup user ID")
-    user_notification_emails: Optional[str] = Field(None, description="Notification email addresses")
-    
+    """User creation schema"""
+    user_password: str
+
 
 class UserUpdate(BaseModel):
-    """Schema for updating an existing user."""
-    
-    user_name: Optional[str] = Field(None, max_length=255, description="Username for login")
-    user_password: Optional[str] = Field(None, min_length=8, max_length=500, description="User password (will be hashed)")
-    user_email: Optional[EmailStr] = Field(None, max_length=255, description="User email address")
-    user_firstname: Optional[str] = Field(None, max_length=255, description="First name")
-    user_lastname: Optional[str] = Field(None, max_length=255, description="Last name")
-    agent_id: Optional[int] = Field(None, description="Agent ID")
-    company_id: Optional[int] = Field(None, description="Company ID")
-    user_nric: Optional[str] = Field(None, max_length=50, description="National registration/identity number")
-    user_initial: Optional[str] = Field(None, max_length=10, description="User initials")
-    user_gender: Optional[str] = Field(None, max_length=20, description="Gender")
-    user_maritalstatus: Optional[str] = Field(None, max_length=50, description="Marital status")
-    user_department_id: Optional[int] = Field(None, description="Department ID")
-    user_branch_id: Optional[int] = Field(None, description="Branch ID")
-    user_officephone: Optional[str] = Field(None, max_length=50, description="Office phone")
-    user_homephone: Optional[str] = Field(None, max_length=50, description="Home phone")
-    user_handphone: Optional[str] = Field(None, max_length=50, description="Mobile phone")
-    user_address1: Optional[str] = Field(None, max_length=500, description="Address line 1")
-    user_address2: Optional[str] = Field(None, max_length=500, description="Address line 2")
-    user_addresscity: Optional[str] = Field(None, max_length=100, description="City")
-    user_stateprovince: Optional[str] = Field(None, max_length=100, description="State/Province")
-    user_postalcode: Optional[str] = Field(None, max_length=20, description="Postal code")
-    user_citycode: Optional[str] = Field(None, max_length=20, description="City code")
-    user_countrycode: Optional[str] = Field(None, max_length=20, description="Country code")
-    user_note: Optional[str] = Field(None, description="Additional notes")
-    user_is_disabled: Optional[bool] = Field(None, description="Whether user is disabled")
-    user_staffcode: Optional[str] = Field(None, max_length=50, description="Staff code")
-    user_employee_id: Optional[str] = Field(None, max_length=50, description="Employee ID")
-    user_employee_number: Optional[str] = Field(None, max_length=50, description="Employee number")
-    job_title: Optional[str] = Field(None, max_length=255, description="Job title")
-    staff_type: Optional[str] = Field(None, max_length=100, description="Staff type")
-    highest_education: Optional[str] = Field(None, max_length=255, description="Highest education level")
-    join_date: Optional[datetime] = Field(None, description="Date joined the organization")
-    user_approval_limit: Optional[Decimal] = Field(None, description="Approval limit")
-    user_deviation_limit: Optional[Decimal] = Field(None, description="Deviation limit")
-    supervisor_user_id: Optional[int] = Field(None, description="Supervisor user ID")
-    backup_user_id: Optional[int] = Field(None, description="Backup user ID")
-    user_notification_emails: Optional[str] = Field(None, description="Notification email addresses")
-    user_modified_by: Optional[str] = Field(None, max_length=255, description="Modified by username")
+    """User update schema"""
+    user_email: Optional[str] = None
+    user_firstname: Optional[str] = None
+    user_lastname: Optional[str] = None
+    user_password: Optional[str] = None
 
-
-class UserInDB(UserBase):
-    """Schema for user as stored in database."""
-    
-    id: int = Field(..., description="Primary key")
-    user_id: str = Field(..., max_length=36, description="UUID for external references")
-    agent_id: Optional[int] = None
-    company_id: Optional[int] = None
-    user_nric: Optional[str] = None
-    user_initial: Optional[str] = None
-    user_gender: Optional[str] = None
-    user_maritalstatus: Optional[str] = None
-    user_department_id: Optional[int] = None
-    user_branch_id: Optional[int] = None
-    user_officephone: Optional[str] = None
-    user_homephone: Optional[str] = None
-    user_handphone: Optional[str] = None
-    user_address1: Optional[str] = None
-    user_address2: Optional[str] = None
-    user_addresscity: Optional[str] = None
-    user_stateprovince: Optional[str] = None
-    user_postalcode: Optional[str] = None
-    user_citycode: Optional[str] = None
-    user_countrycode: Optional[str] = None
-    user_note: Optional[str] = None
-    user_is_deleted: bool = False
-    user_is_disabled: bool = False
-    is_show: bool = True
-    is_update: bool = False
-    is_ad_user: bool = False
-    user_register_on: Optional[datetime] = None
-    user_created_by: Optional[str] = None
-    user_created_on: datetime
-    user_modified_by: Optional[str] = None
-    user_modified_on: Optional[datetime] = None
-    user_photo_path: Optional[str] = None
-    user_signature_path: Optional[str] = None
-    user_is_firsttime_login: bool = True
-    user_security_question_id: Optional[int] = None
-    user_security_answer: Optional[str] = None
-    user_is_trustedhub: bool = False
-    user_staffcode: Optional[str] = None
-    user_employee_id: Optional[str] = None
-    user_employee_number: Optional[str] = None
-    job_title: Optional[str] = None
-    staff_type: Optional[str] = None
-    highest_education: Optional[str] = None
-    join_date: Optional[datetime] = None
-    user_approval_limit: Optional[Decimal] = None
-    user_deviation_limit: Optional[Decimal] = None
-    supervisor_user_id: Optional[int] = None
-    backup_user_id: Optional[int] = None
-    user_notification_emails: Optional[str] = None
-    user_deleted_by: Optional[str] = None
-    user_deleted_on: Optional[datetime] = None
-    user_reset_password_by: Optional[str] = None
-    user_reset_password_on: Optional[datetime] = None
-    user_disabled_by: Optional[str] = None
-    user_disabled_on: Optional[datetime] = None
-    user_enabled_by: Optional[str] = None
-    user_enabled_on: Optional[datetime] = None
-    user_change_password_by: Optional[str] = None
-    user_change_password_on: Optional[datetime] = None
-    ro1: Optional[int] = None
-    ro2: Optional[int] = None
-    editing_by: Optional[str] = None
-    version_no: int = 0
-    
-    class Config:
-        from_attributes = True
-        
 
 class UserResponse(UserBase):
-    """Schema for user response (excludes sensitive fields)."""
-    
-    id: int = Field(..., description="Primary key")
-    user_id: str = Field(..., description="UUID for external references")
-    user_staffcode: Optional[str] = None
-    user_employee_id: Optional[str] = None
-    user_employee_number: Optional[str] = None
-    job_title: Optional[str] = None
-    staff_type: Optional[str] = None
-    user_department_id: Optional[int] = None
-    user_branch_id: Optional[int] = None
-    company_id: Optional[int] = None
-    user_is_disabled: bool = False
+    """User response schema"""
+    id: int
+    user_id: str
     user_is_deleted: bool = False
-    user_created_on: datetime
-    user_modified_on: Optional[datetime] = None
+    user_is_disabled: bool = False
     
     class Config:
         from_attributes = True
+
+
+class JWTUser(BaseModel):
+    """
+    JWT-based user representation (no database required).
+    
+    This model represents a user authenticated via SSO JWT token.
+    User data comes from JWT claims, not from TAV database.
+    
+    This allows TAV to work without storing user records locally,
+    relying instead on BizProj (or other SSO provider) as the source of truth.
+    """
+    id: int = Field(..., description="User ID from JWT token")
+    user_name: str = Field(..., description="Username from JWT token")
+    user_email: Optional[str] = Field(None, description="Email (if provided in JWT)")
+    user_firstname: Optional[str] = Field(None, description="First name (if provided)")
+    user_lastname: Optional[str] = Field(None, description="Last name (if provided)")
+    department: Optional[str] = Field(None, description="Department from JWT")
+    role: Optional[str] = Field(None, description="Role from JWT")
+    
+    # Make it compatible with existing code that expects User model
+    @property
+    def user_is_deleted(self) -> bool:
+        """JWT users are never deleted (they wouldn't have valid tokens)"""
+        return False
+    
+    @property
+    def user_is_disabled(self) -> bool:
+        """JWT users are never disabled (they wouldn't have valid tokens)"""
+        return False
+    
+    @classmethod
+    def from_jwt_claims(cls, claims: dict) -> "JWTUser":
+        """
+        Create JWTUser from JWT token claims.
+        
+        Args:
+            claims: Decoded JWT payload
+            
+        Returns:
+            JWTUser instance
+            
+        Example JWT claims:
+            {
+                "sub": "mark.tanakorn",
+                "userId": "123",
+                "username": "mark.tanakorn",
+                "department": "IT",
+                "role": "User",
+                "iss": "BizProj",
+                "aud": "TAV",
+                ...
+            }
+        """
+        return cls(
+            id=int(claims.get("userId", 0)),
+            user_name=claims.get("username", claims.get("sub", "unknown")),
+            user_email=claims.get("email"),
+            user_firstname=claims.get("firstname") or claims.get("firstName"),
+            user_lastname=claims.get("lastname") or claims.get("lastName"),
+            department=claims.get("department"),
+            role=claims.get("role", "User")
+        )
+    
+    class Config:
+        from_attributes = True
+
+
+class TokenResponse(BaseModel):
+    """Token response schema"""
+    access_token: str
+    refresh_token: Optional[str] = None
+    token_type: str = "bearer"
+
+
+class TokenPayload(BaseModel):
+    """Token payload schema"""
+    sub: int  # User ID
+    exp: Optional[int] = None
+    type: str = "access"  # access or refresh
 
 
 class UserListResponse(BaseModel):
-    """Schema for paginated user list response."""
-    
-    total: int = Field(..., description="Total number of users")
-    users: list[UserResponse] = Field(..., description="List of users")
-    page: int = Field(..., description="Current page number")
-    page_size: int = Field(..., description="Number of items per page")
-    
+    """User list response schema"""
+    users: list[UserResponse]
+    total: int
+    page: int = 1
+    page_size: int = 50
+
 
 class PasswordChange(BaseModel):
-    """Schema for password change request."""
-    
-    old_password: str = Field(..., min_length=8, description="Current password")
-    new_password: str = Field(..., min_length=8, max_length=500, description="New password")
-    
-    @validator('new_password')
-    def passwords_must_differ(cls, v, values):
-        if 'old_password' in values and v == values['old_password']:
-            raise ValueError('New password must be different from old password')
-        return v
+    """Password change schema"""
+    old_password: str
+    new_password: str = Field(..., min_length=6)
 
 
 class PasswordReset(BaseModel):
-    """Schema for password reset by admin."""
-    
-    new_password: str = Field(..., min_length=8, max_length=500, description="New password")
-    reset_by: str = Field(..., max_length=255, description="Username of admin resetting password")
-
+    """Password reset schema"""
+    new_password: str = Field(..., min_length=6)

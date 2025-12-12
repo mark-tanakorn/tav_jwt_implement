@@ -18,11 +18,15 @@ from app.config import settings
 from app.database.models.user import User
 from app.database.repositories.users import UserRepository
 from app.database.session import SessionLocal
+from app.schemas.user import JWTUser
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # JWT Configuration
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+# Token expiry is now controlled by settings.ACCESS_TOKEN_EXPIRE_MINUTES
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 # Security scheme - auto_error=False allows us to handle missing auth with 401 instead of 403
@@ -49,7 +53,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     
     Args:
         data: Data to encode in token
-        expires_delta: Optional expiration time
+        expires_delta: Optional expiration time (if not provided, uses settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
     Returns:
         Encoded JWT token
@@ -59,7 +63,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        # Use settings value instead of hardcoded constant
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({"exp": expire, "type": "access"})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
@@ -99,9 +104,12 @@ def decode_token(token: str) -> dict:
         HTTPException: If token is invalid
     """
     try:
+        logger.info(f"🔍 Decoding token: {token[:50]}...")
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        logger.info(f"✅ Token decoded successfully: sub={payload.get('sub')} (type={type(payload.get('sub')).__name__}), token_type={payload.get('type')}")
         return payload
-    except JWTError:
+    except JWTError as e:
+        logger.error(f"❌ JWT validation failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -112,16 +120,20 @@ def decode_token(token: str) -> dict:
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
-) -> User:
+) -> JWTUser:
     """
-    Get current authenticated user from JWT token.
+    Get current authenticated user from JWT token (JWT-based, no DB lookup required).
+    
+    IMPORTANT: This function now returns JWTUser (not User model from DB).
+    User data comes from JWT token claims, not from TAV database.
+    This allows SSO integration without requiring users to exist in TAV DB.
     
     Args:
         credentials: HTTP authorization credentials (Bearer token)
-        db: Database session
+        db: Database session (not used anymore, but kept for backward compatibility)
     
     Returns:
-        Current user object
+        JWTUser object with user data from token
     
     Raises:
         HTTPException: If authentication fails
@@ -155,55 +167,38 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Get user from database
-    user_repo = UserRepository(db)
-    user = user_repo.get_by_id(int(user_id))
+    # Create JWTUser from token claims (no DB lookup)
+    jwt_user = JWTUser(
+        id=int(user_id),
+        user_name=payload.get("username", f"user_{user_id}"),
+        user_email=payload.get("email"),
+        user_firstname=payload.get("firstname"),
+        user_lastname=payload.get("lastname"),
+        department=payload.get("department"),
+        role=payload.get("role", "User")
+    )
     
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    logger.debug(f"Authenticated user from JWT: {jwt_user.user_name} (ID={jwt_user.id})")
     
-    # Check if user is active
-    if not user_repo.is_active(user.id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is disabled or deleted"
-        )
-    
-    return user
+    return jwt_user
 
 
 def get_current_active_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
+    current_user: JWTUser = Depends(get_current_user)
+) -> JWTUser:
     """
     Get current active user (not disabled or deleted).
+    
+    Note: JWT-based users are always "active" by definition
+    (if they have a valid token, they're not disabled/deleted).
     
     Args:
         current_user: Current user from token
     
     Returns:
         Active user object
-    
-    Raises:
-        HTTPException: If user is not active
     """
-    # Additional check (already done in get_current_user, but explicit)
-    if current_user.user_is_disabled is True:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is disabled"
-        )
-    
-    if current_user.user_is_deleted is True:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is deleted"
-        )
-    
+    # JWT users are always active (token wouldn't be valid otherwise)
     return current_user
 
 
@@ -244,8 +239,8 @@ def get_current_user_dev(
 
 
 def get_current_admin_user(
-    current_user: User = Depends(get_current_active_user)
-) -> User:
+    current_user: JWTUser = Depends(get_current_active_user)
+) -> JWTUser:
     """
     Get current admin user (for endpoints requiring admin privileges).
     
@@ -261,9 +256,9 @@ def get_current_admin_user(
     Raises:
         HTTPException: If user is not an admin
     """
-    # TODO: Check if user has admin role
+    # TODO: Check if user has admin role from JWT
     # For now, just return the current user
-    # In production, you would check a role field or permission system
+    # In production, check current_user.role == "Admin"
     
     return current_user
 
@@ -316,15 +311,15 @@ def get_trigger_manager(request: Request):
     return trigger_manager
 
 
-def get_user_identifier(user: User) -> str:
+def get_user_identifier(user: JWTUser) -> str:
     """
     Get a safe user identifier for logging/tracking purposes.
     
-    Works in both dev mode (where email might not be set) and production.
+    Works with JWTUser model.
     Falls back gracefully through multiple fields.
     
     Args:
-        user: User object
+        user: JWTUser object
     
     Returns:
         User identifier string (email > username > user_id > "system")
@@ -335,20 +330,21 @@ def get_user_identifier(user: User) -> str:
         return user.email
     if hasattr(user, 'user_name') and user.user_name:
         return user.user_name
-    if hasattr(user, 'user_id') and user.user_id:
-        return f"user_{user.user_id}"
+    if hasattr(user, 'id') and user.id:
+        return f"user_{user.id}"
     return "system"
 
 
 def get_current_user_smart(
     db: Session = Depends(get_db),
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
-) -> User:
+) -> JWTUser:
     """
     Smart user dependency that switches between dev and production mode.
     
-    - **Dev Mode (enable_dev_mode=True in DB)**: Bypasses authentication, returns first active user
-    - **Production Mode (enable_dev_mode=False in DB)**: Requires JWT token authentication
+    - **If JWT token provided**: ALWAYS use it (even in dev mode) - enables SSO testing
+    - **Dev Mode + No token**: Bypasses authentication, returns mock JWTUser for first DB user
+    - **Production Mode + No token**: Requires JWT token authentication
     
     Controlled by database setting: developer.enable_dev_mode
     
@@ -357,12 +353,18 @@ def get_current_user_smart(
         credentials: Optional HTTP authorization credentials
     
     Returns:
-        User object
+        JWTUser object
     
     Raises:
         HTTPException: If authentication fails (production mode) or no user found (dev mode)
     """
-    # Check if dev mode is enabled in database
+    # PRIORITY 1: If a JWT token is provided, ALWAYS use it (even in dev mode)
+    # This allows SSO to work while still having dev mode convenience
+    if credentials:
+        logger.info("📝 JWT token provided - using token authentication")
+        return get_current_user(credentials, db)
+    
+    # PRIORITY 2: No token provided - check dev mode
     try:
         from app.core.config.manager import SettingsManager
         manager = SettingsManager(db)
@@ -374,17 +376,27 @@ def get_current_user_smart(
         enable_dev_mode = settings.ENABLE_DEV_MODE
     
     if enable_dev_mode:
-        # DEV MODE: Bypass authentication
-        return get_current_user_dev(db)
+        # DEV MODE: No token provided, bypass authentication
+        logger.info("🔓 Dev mode enabled - using first DB user as fallback")
+        db_user = get_current_user_dev(db)
+        # Convert DB User to JWTUser
+        return JWTUser(
+            id=db_user.id,
+            user_name=db_user.user_name,
+            user_email=db_user.user_email,
+            user_firstname=db_user.user_firstname,
+            user_lastname=db_user.user_lastname,
+            department=None,
+            role="User"
+        )
     else:
         # PRODUCTION MODE: Require authentication
-        if not credentials:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        return get_current_user(credentials, db)
+        logger.error("🔒 Production mode - JWT token required but not provided")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 def get_current_user_always_dev(

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getApiBaseUrl } from "@/lib/api-config";
+import { getAuthToken } from "@/lib/auth";
 
 interface Credential {
   id: number;
@@ -36,7 +37,14 @@ export default function CredentialPicker({
 
   const fetchCredentials = async () => {
     try {
+      const token = getAuthToken();
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${getApiBaseUrl()}/api/v1/credentials`, {
+        headers: headers,
         credentials: 'include', // Include cookies for authentication
       });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useWorkflows } from "@/lib/dashboard";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   PieChart,
@@ -14,12 +14,18 @@ import {
 import { WorkflowContextMenu } from "@/components/WorkflowContextMenu";
 import { useWorkflowContextMenu } from "@/hooks/useWorkflowContextMenu";
 import { getApiBaseUrl } from "@/lib/api-config";
+import { extractAndStoreTokenFromUrl } from "@/lib/auth";
 
 type SortField = "name" | "status" | "last_run_at" | "created_at" | "author_id";
 type SortDirection = "asc" | "desc";
 
 export default function Dashboard() {
   const router = useRouter();
+
+  // Extract and store token from URL on mount (SSO login)
+  useEffect(() => {
+    extractAndStoreTokenFromUrl();
+  }, []);
 
   // Get workflow data with real-time updates
   const {

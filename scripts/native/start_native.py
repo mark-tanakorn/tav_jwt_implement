@@ -300,6 +300,35 @@ def start_backend(project_root, local_ip, backend_port=DEFAULT_BACKEND_PORT, fro
         # Venv exists and is valid - check for missing packages
         check_and_install_missing_packages(venv_python, backend_dir)
     
+    # Initialize database if it doesn't exist
+    print_colored("🗄️  Checking database...", Colors.BLUE)
+    db_file = backend_dir / "data" / "tav_engine.db"
+    if not db_file.exists():
+        print_colored("📦 Database not found. Initializing...", Colors.YELLOW)
+        try:
+            result = subprocess.run(
+                [str(venv_python), "scripts/init_db.py"],
+                cwd=backend_dir,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            if result.returncode == 0:
+                print_colored("✅ Database initialized successfully", Colors.GREEN)
+            else:
+                print_colored(f"⚠️  Database initialization returned non-zero: {result.returncode}", Colors.YELLOW)
+                if result.stdout:
+                    print(result.stdout)
+                if result.stderr:
+                    print(result.stderr)
+        except subprocess.TimeoutExpired:
+            print_colored("⚠️  Database initialization timed out", Colors.YELLOW)
+        except Exception as e:
+            print_colored(f"⚠️  Database initialization error: {e}", Colors.YELLOW)
+            print_colored("   Backend will create tables on startup", Colors.BLUE)
+    else:
+        print_colored("✅ Database exists", Colors.GREEN)
+    
     # Set up environment with CORS origins including LAN IP
     import json
     env = os.environ.copy()

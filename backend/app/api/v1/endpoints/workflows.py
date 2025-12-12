@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_current_user_smart, get_user_identifier, get_current_user, get_trigger_manager, get_current_active_user
 from app.database.models.user import User
+from app.schemas.user import JWTUser
 from app.core.execution.orchestrator import WorkflowOrchestrator
 from app.core.execution.context import ExecutionMode
 from app.security.encryption import encrypt_dict, decrypt_dict
@@ -316,7 +317,7 @@ def _validate_workflow_structure(nodes: list, connections: list) -> None:
 async def create_workflow(
     workflow: WorkflowCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart)
+    current_user: JWTUser = Depends(get_current_user_smart)
 ):
     """
     Create a new workflow.
@@ -427,7 +428,7 @@ async def list_workflows(
     include_templates: bool = False,
     include_inactive: bool = False,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart)
+    current_user: JWTUser = Depends(get_current_user_smart)
 ):
     """
     List all workflows.
@@ -445,8 +446,8 @@ async def list_workflows(
     """
     from app.database.models.workflow import Workflow
     
-    # Build query
-    query = db.query(Workflow)
+    # Build query - FILTER BY CURRENT USER
+    query = db.query(Workflow).filter(Workflow.author_id == current_user.id)
     
     # Apply filters
     if not include_inactive:
@@ -494,7 +495,7 @@ async def list_workflows(
 async def get_workflow(
     workflow_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart)
+    current_user: JWTUser = Depends(get_current_user_smart)
 ):
     """
     Load a single workflow by ID.
@@ -548,7 +549,7 @@ async def update_workflow(
     workflow_id: str,
     workflow_update: WorkflowUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart)
+    current_user: JWTUser = Depends(get_current_user_smart)
 ):
     """
     Update an existing workflow.
@@ -673,7 +674,7 @@ async def update_workflow(
 async def delete_workflow(
     workflow_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart)
+    current_user: JWTUser = Depends(get_current_user_smart)
 ):
     """
     Delete a workflow permanently.
@@ -720,7 +721,7 @@ async def rename_workflow(
     workflow_id: str,
     name_update: WorkflowNameUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart)
+    current_user: JWTUser = Depends(get_current_user_smart)
 ):
     """
     Quick rename workflow.
@@ -791,7 +792,7 @@ async def rename_workflow(
 async def duplicate_workflow(
     workflow_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart)
+    current_user: JWTUser = Depends(get_current_user_smart)
 ):
     """
     Clone an existing workflow.
@@ -878,7 +879,7 @@ async def execute_workflow(
     workflow_id: str,
     request: ExecuteWorkflowRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart),
+    current_user: JWTUser = Depends(get_current_user_smart),
     trigger_manager=Depends(get_trigger_manager),
     x_await_completion: Optional[str] = Header(None, alias="X-Await-Completion"),
     origin: Optional[str] = Header(None, alias="Origin"),
@@ -1242,7 +1243,7 @@ async def execute_workflow(
 async def stop_workflow(
     workflow_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart),
+    current_user: JWTUser = Depends(get_current_user_smart),
     trigger_manager=Depends(get_trigger_manager)
 ):
     """
@@ -1368,7 +1369,7 @@ async def stop_workflow(
 async def get_workflow_status(
     workflow_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart),
+    current_user: JWTUser = Depends(get_current_user_smart),
     trigger_manager = Depends(get_trigger_manager)
 ):
     """
@@ -1441,7 +1442,7 @@ async def get_workflow_status(
 async def get_execution_status(
     execution_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart)
+    current_user: JWTUser = Depends(get_current_user_smart)
 ):
     """
     Get execution status and results.
@@ -1495,7 +1496,7 @@ async def get_execution_status(
 async def pause_workflow(
     workflow_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart)
+    current_user: JWTUser = Depends(get_current_user_smart)
 ):
     """
     Pause a running workflow execution.
@@ -1545,7 +1546,7 @@ async def pause_workflow(
 async def resume_workflow(
     workflow_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_smart)
+    current_user: JWTUser = Depends(get_current_user_smart)
 ):
     """
     Resume a paused workflow execution.
